@@ -21,6 +21,7 @@
 #include "modules/perception/base/distortion_model.h"
 #include "modules/perception/camera/common/camera_frame.h"
 #include "modules/perception/camera/lib/calibration_service/online_calibration_service/online_calibration_service.h"
+#include "modules/perception/camera/lib/calibrator/laneline/laneline_calibrator.h"
 #include "modules/perception/camera/lib/interface/base_calibration_service.h"
 #include "modules/perception/camera/lib/lane/detector/denseline/denseline_lane_detector.h"
 #include "modules/perception/camera/lib/lane/postprocessor/denseline/denseline_lane_postprocessor.h"
@@ -31,14 +32,19 @@ namespace apollo {
 namespace perception {
 namespace camera {
 
+REGISTER_LANE_POSTPROCESSOR(DenselineLanePostprocessor);
+REGISTER_LANE_DETECTOR(DenselineLaneDetector);
+REGISTER_CALIBRATOR(LaneLineCalibrator);
+REGISTER_CALIBRATION_SERVICE(OnlineCalibrationService);
+
 int lane_postprocessor_eval() {
   //  initialize lane detector
   LaneDetectorInitOptions init_options;
   LaneDetectorOptions detetor_options;
   init_options.conf_file = "config.pt";
-  init_options.root_dir = "data/";
+  init_options.root_dir = "/apollo/modules/perception/testdata/camera/lib/lane/detector/denseline/data/";
   base::BrownCameraDistortionModel model;
-  if (!common::LoadBrownCameraIntrinsic("params/front_6mm_intrinsics.yaml",
+  if (!common::LoadBrownCameraIntrinsic("/apollo/modules/perception/testdata/camera/lib/lane/detector/denseline/params/onsemi_obstacle_intrinsics.yaml",
                                         &model)) {
     AERROR << "LoadBrownCameraIntrinsic Error!";
     return -1;
@@ -46,15 +52,15 @@ int lane_postprocessor_eval() {
   init_options.base_camera_model = model.get_camera_model();
 
   std::shared_ptr<DenselineLaneDetector> detector(new DenselineLaneDetector);
-  AINFO << "Detector: " << detector->Name();
+  std::cout << "Detector: " << detector->Name() << "\n";
   detector->Init(init_options);
   // Initialize lane postprocessor
   std::shared_ptr<DenselineLanePostprocessor> lane_postprocessor;
   lane_postprocessor.reset(new DenselineLanePostprocessor);
   LanePostprocessorInitOptions postprocessor_init_options;
-  postprocessor_init_options.detect_config_root = "./data/";
+  postprocessor_init_options.detect_config_root = "/apollo/modules/perception/testdata/camera/lib/lane/detector/denseline/data/";
   postprocessor_init_options.detect_config_name = "config.pt";
-  postprocessor_init_options.root_dir = "./data/";
+  postprocessor_init_options.root_dir = "/apollo/modules/perception/testdata/camera/lib/lane/postprocessor/denseline/data/";
   postprocessor_init_options.conf_file = "lane_postprocessor_config.pt";
   lane_postprocessor->Init(postprocessor_init_options);
   LanePostprocessorOptions postprocessor_options;
@@ -75,6 +81,8 @@ int lane_postprocessor_eval() {
       debug_img_list.push_back(imname);
     }
   }
+
+  std::cout << "Processing " << imnames.size() << " files\n";
 
   // Lane process for each image
   for (int i = 0; i < static_cast<int>(imnames.size()); ++i) {
@@ -101,7 +109,7 @@ int lane_postprocessor_eval() {
         continue;
       }
     }
-    AINFO << "Process file: " << FLAGS_file_title;
+    std::cout << "Process file: " << FLAGS_file_title << "\n";
 
     // Image data initialized
     CameraFrame frame;
@@ -144,7 +152,7 @@ int lane_postprocessor_eval() {
     std::shared_ptr<BaseCalibrationService> calibration_service;
     calibration_service.reset(
         BaseCalibrationServiceRegisterer::GetInstanceByName(
-            "OnlineCalibration"));
+            "OnlineCalibrationService"));
     ACHECK(calibration_service->Init(calibration_service_init_options));
 
     std::map<std::string, float> name_camera_ground_height_map;
@@ -156,17 +164,16 @@ int lane_postprocessor_eval() {
         pitch_angle);
     frame.calibration_service = calibration_service.get();
     // Detect the lane image
-    apollo::common::time timer;
+    apollo::common::util::Timer timer;
     timer.Start();
     detector->Detect(detetor_options, &frame);
-    AINFO << "Detector finished!";
-    timer.End("LaneDetector");
+    std::cout << "Detector finished!\n";
+    std::cout << "LaneDetector Timer: " << timer.End("LaneDetector") << " ms\n";
 
-    timer.Start();
     // Postprocess
     lane_postprocessor->Process2D(postprocessor_options, &frame);
     lane_postprocessor->Process3D(postprocessor_options, &frame);
-    timer.End("LanePostprocessor");
+    std::cout << "LanePostprocessor Timer: " << timer.End("LanePostprocessor") << " ms\n";
     std::string save_img_path;
 
     std::vector<unsigned char> lane_map;
@@ -189,8 +196,8 @@ int lane_postprocessor_eval() {
       save_img_path = absl::StrCat(FLAGS_save_dir, "/", FLAGS_file_title, "_1_",
                                    FLAGS_file_ext_name, ".jpg");
       show_detect_point_set(img, detect_laneline_point_set, save_img_path);
-      AINFO << "detect_laneline_point_set num: "
-            << detect_laneline_point_set.size();
+      std::cout << "detect_laneline_point_set num: "
+            << detect_laneline_point_set.size() << "\n";
     }
     // Draw the lane map, draw the connected_components
     if (FLAGS_lane_cc_debug) {

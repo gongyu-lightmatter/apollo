@@ -14,6 +14,7 @@
  * limitations under the License.
  *****************************************************************************/
 #include "modules/perception/camera/tools/lane_detection/lane_common.h"
+#include <opencv2/imgproc/imgproc_c.h>
 
 #include "cyber/common/log.h"
 

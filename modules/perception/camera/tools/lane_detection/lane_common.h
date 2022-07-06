@@ -24,6 +24,8 @@
 #include "modules/perception/base/point.h"
 #include "modules/perception/camera/lib/lane/common/common_functions.h"
 
+#include "gflags/gflags.h"
+
 DECLARE_string(list);
 DECLARE_string(file_title);
 DECLARE_string(debug_file);

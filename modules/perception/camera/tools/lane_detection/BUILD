@@ -11,6 +11,10 @@ cc_library(
         "//cyber",
         "//modules/perception/base",
         "//modules/perception/camera/lib/lane/common:common_functions",
+        "@opencv//:core",
+        "@opencv//:highgui",
+        "@opencv//:imgcodecs",
+        "@opencv//:imgproc",
     ],
 )
 
@@ -26,12 +30,17 @@ cc_binary(
         "//modules/perception/base",
         "//modules/perception/camera/common",
         "//modules/perception/camera/lib/calibration_service/online_calibration_service",
+	"//modules/perception/camera/lib/calibrator/laneline:laneline_calibrator",
         "//modules/perception/camera/lib/interface",
         "//modules/perception/camera/lib/lane/detector/denseline:denseline_lane_detector",
         "//modules/perception/camera/lib/lane/postprocessor/denseline:denseline_lane_postprocessor",
         "//modules/perception/common/io:io_util",
+        "//modules/perception/inference/tensorrt/plugins:kernels_cuda",
         "@com_github_gflags_gflags//:gflags",
-        "@opencv//:opencv",
+        "@opencv//:core",
+        "@opencv//:highgui",
+        "@opencv//:imgcodecs",
+        "@opencv//:imgproc",
     ],
 )
 

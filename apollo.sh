@@ -159,6 +159,7 @@ function main() {
 
     local build_sh="${APOLLO_ROOT_DIR}/scripts/apollo_build.sh"
     local test_sh="${APOLLO_ROOT_DIR}/scripts/apollo_test.sh"
+    local run_sh="${APOLLO_ROOT_DIR}/scripts/apollo_run.sh"
     local coverage_sh="${APOLLO_ROOT_DIR}/scripts/apollo_coverage.sh"
     local ci_sh="${APOLLO_ROOT_DIR}/scripts/apollo_ci.sh"
 
@@ -197,6 +198,9 @@ function main() {
             ;;
         test)
             env ${APOLLO_ENV} bash "${test_sh}" --config=unit_test "$@"
+	    ;;
+        run)
+            env ${APOLLO_ENV} bash "${run_sh}" "$@"
             ;;
         coverage)
             env ${APOLLO_ENV} bash "${coverage_sh}" "$@"
