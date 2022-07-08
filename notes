@@ -1,0 +1,12 @@
+# this will build the executable lane_denseline_eval
+./apollo build_opt_gpu perception/camera/tools/lane_detection 
+
+# these will setup the env
+source scripts/apollo.bashrc
+source scripts/apollo_base.sh
+
+
+# build a test.list file with the test images and run the executable with it
+cd bazel-bin/modules/perception/camera/tools/lane_detection
+echo test.jpg > test.list
+./lane_denseline_eval -list test.list
